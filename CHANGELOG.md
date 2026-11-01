@@ -6,6 +6,17 @@ this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows Semantic Versioning intent.
 
+## [Unreleased]
+
+### Fixed (`markets`)
+
+- Datacenter `enforce_reserve_capacity=True` now emits the native BESS
+  reserve energy rows, accounting for interval duration and efficiency.
+- Sequential battery and datacenter solves preserve an end SOC of exactly
+  zero instead of restoring the preceding nonzero SOC.
+- Datacenter commitment optimization uses a time-coupled request even for
+  a single period, allowing the sequential SCUC path to execute.
+
 ## [0.1.9] — 2026-05-04
 
 New **Datacenter Operator** market — behind-the-meter SCUC for a

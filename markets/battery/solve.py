@@ -162,9 +162,11 @@ def _solve_sequential(problem: BatteryProblem, policy: BatteryPolicy) -> list[An
         )
         result = surge.solve_dispatch(network, request, lp_solver=policy.lp_solver)
         results.append(result)
-        soc = extract_storage_end_soc(
+        next_soc = extract_storage_end_soc(
             result, problem.BESS_RESOURCE_ID, fallback=soc
-        ) or soc
+        )
+        if next_soc is not None:
+            soc = next_soc
     return results
 
 
