@@ -60,9 +60,10 @@ class DataCenterPolicy:
     #: incumbent if the limit fires.
     mip_time_limit_secs: float = 600.0
 
-    #: When ``True``, every cleared MW of an AS award must be backed
-    #: by enough energy headroom (BESS SOC, thermal ramp room) to
-    #: deploy at 100% for the whole period. Disabled by default — the
+    #: When ``True``, BESS real-power AS awards must be backed by
+    #: enough SOC headroom to deploy at 100% for one whole period.
+    #: Up and down are separate per-period activation scenarios,
+    #: not a guarantee of consecutive full deployments. Disabled by default — the
     #: dashboard turns this on once a scenario is past the "explore
     #: roughly" stage.
     enforce_reserve_capacity: bool = False

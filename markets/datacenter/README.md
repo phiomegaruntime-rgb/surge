@@ -55,6 +55,20 @@ IT load:
 
 ## Quick start
 
+### Battery reserve energy guard
+
+Set `DataCenterPolicy(enforce_reserve_capacity=True)` to couple each
+qualified real-power BESS reserve award to available storage energy.
+For each interval of duration `dt`, the native model enforces
+`sum(up_award * dt / eta_dis) <= end_soc - soc_min` and
+`sum(down_award * dt * eta_ch) <= soc_max - end_soc`.
+Up and down are separate full-activation scenarios. This is a
+per-interval energy envelope, not a guarantee for repeated deployment
+across all future intervals or a network/transient security certificate.
+The default `False` retains the exploratory energy-unconstrained reserve
+mode. Sequential solves preserve a reported SOC of exactly zero and
+use a time-coupled one-period request when optimizing commitment.
+
 ```python
 from pathlib import Path
 from markets.datacenter import (
@@ -127,7 +141,7 @@ print(report["extras"]["pl_summary"])
 | `lp_solver` | `"highs"` | LP/MIP backend. |
 | `mip_rel_gap` | `1e-3` | MIP optimality gap tolerance. |
 | `mip_time_limit_secs` | `600.0` | Solver wall-clock cap. |
-| `enforce_reserve_capacity` | `False` | When on, every cleared MW of AS award must be backed by SOC + ramp headroom. |
+| `enforce_reserve_capacity` | `False` | When on, BESS real-power AS awards are backed by SOC for a full-period up or down deployment. |
 
 ## Output shape
 

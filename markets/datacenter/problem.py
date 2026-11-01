@@ -641,7 +641,11 @@ class DataCenterProblem:
         builder = (
             _request_builder()
             .timeline(periods=n, hours_by_period=self.period_durations_hours[start:stop])
-            .coupling("time_coupled" if n > 1 else "period_by_period")
+            .coupling(
+                "time_coupled"
+                if n > 1 or policy.commitment_mode == "optimize"
+                else "period_by_period"
+            )
         )
 
         if policy.commitment_mode == "optimize":
@@ -855,6 +859,34 @@ class DataCenterProblem:
             builder.reserve_offers(
                 self._reserve_offer_schedules(period_slice, shortfall_by_product)
             )
+            # Back the advertised full-period deployment guard with the
+            # native storage energy rows, as the battery market already does.
+            if policy.enforce_reserve_capacity:
+                bess = self.site.bess
+                impacts: list[dict[str, Any]] = []
+                for ap in self.as_products:
+                    product = ap.product_def
+                    if product.id not in bess.qualified_as_products:
+                        continue
+                    if product.kind not in ("Real", "Active"):
+                        continue
+                    if product.direction == "Up":
+                        if not (0.0 < bess.discharge_efficiency <= 1.0):
+                            raise ValueError("discharge_efficiency must be in (0, 1]")
+                        factor = 1.0 / bess.discharge_efficiency
+                    elif product.direction == "Down":
+                        if not (0.0 < bess.charge_efficiency <= 1.0):
+                            raise ValueError("charge_efficiency must be in (0, 1]")
+                        factor = -bess.charge_efficiency
+                    else:
+                        raise ValueError(f"Unsupported reserve direction {product.direction!r}")
+                    impacts.append({
+                        "resource_id": BESS_RESOURCE_ID,
+                        "product_id": product.id,
+                        "values_mwh_per_mw": [factor] * n,
+                    })
+                if impacts:
+                    builder.storage_reserve_soc_impacts(impacts)
 
     @staticmethod
     def _renewable_offer_schedule(
